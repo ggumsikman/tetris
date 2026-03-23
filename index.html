@@ -193,25 +193,75 @@
     @media (max-width: 900px) {
       body {
         align-items: flex-start;
-        padding: 10px 8px 16px;
+        padding: 8px 6px 160px;
       }
 
       .wrap {
         width: 100%;
+        min-height: 100vh;
+        gap: 8px;
+      }
+
+      .hud {
+        font-size: 15px;
+        gap: 12px;
       }
 
       .game-area {
-        flex-direction: column;
-        align-items: center;
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+      }
+
+      #board {
+        width: min(62vw, 240px);
+        height: calc(min(62vw, 240px) * 2);
       }
 
       .side {
-        width: 300px;
+        width: 92px;
         align-items: center;
+        gap: 6px;
+      }
+
+      .score-panel {
+        display: none;
+      }
+
+      .side h3 {
+        font-size: 14px;
+      }
+
+      .help {
+        display: none;
       }
 
       .mobile-controls {
         display: block;
+        position: fixed;
+        left: 50%;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        width: min(96vw, 360px);
+        margin-top: 0;
+        padding: 8px 8px 2px;
+        border: 1px solid #3f3f3f;
+        border-radius: 12px;
+        background: rgba(10, 10, 10, 0.9);
+        backdrop-filter: blur(4px);
+        z-index: 9;
+      }
+
+      .ctrl-row {
+        margin-bottom: 8px;
+      }
+
+      .ctrl-btn {
+        min-width: 66px;
+        min-height: 44px;
+        font-size: 17px;
       }
     }
 
