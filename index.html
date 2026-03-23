@@ -152,6 +152,69 @@
       color: var(--muted);
     }
 
+    .mobile-controls {
+      display: none;
+      margin-top: 12px;
+      width: 100%;
+      max-width: 360px;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .ctrl-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .ctrl-btn {
+      border: 1px solid #4f4f4f;
+      background: #1d1d1d;
+      color: #f2f2f2;
+      border-radius: 10px;
+      min-width: 64px;
+      min-height: 46px;
+      padding: 8px 10px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .ctrl-btn:active {
+      transform: scale(0.98);
+      background: #2b2b2b;
+    }
+
+    .ctrl-btn.wide {
+      min-width: 138px;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        align-items: flex-start;
+        padding: 10px 8px 16px;
+      }
+
+      .wrap {
+        width: 100%;
+      }
+
+      .game-area {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .side {
+        width: 300px;
+        align-items: center;
+      }
+
+      .mobile-controls {
+        display: block;
+      }
+    }
+
     .overlay {
       position: fixed;
       inset: 0;
@@ -251,6 +314,20 @@
         </div>
       </aside>
     </div>
+
+    <div class="mobile-controls" aria-label="모바일 조작 버튼">
+      <div class="ctrl-row">
+        <button class="ctrl-btn" data-action="rotate" type="button">회전</button>
+      </div>
+      <div class="ctrl-row">
+        <button class="ctrl-btn" data-action="left" data-repeat="true" type="button">◀</button>
+        <button class="ctrl-btn" data-action="down" data-repeat="true" type="button">▼</button>
+        <button class="ctrl-btn" data-action="right" data-repeat="true" type="button">▶</button>
+      </div>
+      <div class="ctrl-row">
+        <button class="ctrl-btn wide" data-action="hardDrop" type="button">하드 드롭</button>
+      </div>
+    </div>
   </div>
 
   <div id="gameOverOverlay" class="overlay" aria-hidden="true">
@@ -344,6 +421,7 @@
     const highScoreTextEl = document.getElementById("highScoreText");
     const newRecordTextEl = document.getElementById("newRecordText");
     const restartBtnEl = document.getElementById("restartBtn");
+    const controlButtons = Array.from(document.querySelectorAll(".ctrl-btn[data-action]"));
 
     let board = createBoard();
     let score = 0;
@@ -365,6 +443,8 @@
     let animationId = null;
     let highScore = Number(localStorage.getItem("tetrisHighScore") || 0);
     let isNewRecord = false;
+    let holdTimerId = null;
+    let holdAction = null;
 
     function createBoard() {
       return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -757,6 +837,63 @@
       updateHud();
     }
 
+    function doAction(action) {
+      if (gameOver) return;
+      switch (action) {
+        case "left":
+          move(-1, 0);
+          break;
+        case "right":
+          move(1, 0);
+          break;
+        case "rotate":
+          rotate();
+          break;
+        case "down":
+          if (!move(0, 1)) lockPiece();
+          break;
+        case "hardDrop":
+          hardDrop();
+          break;
+      }
+      drawBoard();
+      drawNext();
+      updateHud();
+    }
+
+    function clearHold() {
+      if (holdTimerId !== null) {
+        clearInterval(holdTimerId);
+        holdTimerId = null;
+      }
+      holdAction = null;
+    }
+
+    function bindMobileControls() {
+      const stopEvents = ["pointerup", "pointercancel", "pointerleave"];
+      controlButtons.forEach((btn) => {
+        const action = btn.dataset.action;
+        const repeat = btn.dataset.repeat === "true";
+
+        btn.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
+          doAction(action);
+
+          if (repeat) {
+            clearHold();
+            holdAction = action;
+            holdTimerId = setInterval(() => {
+              if (holdAction === action) doAction(action);
+            }, 95);
+          }
+        });
+
+        stopEvents.forEach((ev) => {
+          btn.addEventListener(ev, clearHold);
+        });
+      });
+    }
+
     function init() {
       spawnPiece();
       updateHud();
@@ -764,6 +901,7 @@
       drawNext();
       window.addEventListener("keydown", onKeyDown);
       restartBtnEl.addEventListener("click", restartGame);
+      bindMobileControls();
       animationId = requestAnimationFrame((t) => {
         lastTime = t;
         gameLoop(t);
